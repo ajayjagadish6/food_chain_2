@@ -1,0 +1,81 @@
+enum FoodType {
+  Vegetarian
+  NonVegetarian
+  Both
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id               Int            @id @default(autoincrement())
+  email            String         @unique
+  password         String
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  name             String
+  address          String
+  phone            String
+  role             String // 'donor', 'recipient', or 'volunteer'
+  timeWindow       String? // Only for volunteer drivers
+  createdAt        DateTime       @default(now())
+  donations        Donation[]
+  requests         FoodRequest[]
+  deliveries       FoodDelivery[] @relation("DriverDeliveries")
+}
+
+model FoodDelivery {
+  id              Int            @id @default(autoincrement())
+  donation        Donation?      @relation("DonationDelivery")
+  request         FoodRequest?   @relation("RequestDelivery")
+  driver          User?          @relation("DriverDeliveries", fields: [driverId], references: [id])
+  driverId        Int?
+  pickupAddress   String
+  deliveryAddress String
+  pickupTime      String
+  deliveryTime    String
+  status          DeliveryStatus @default(Pending)
+  createdAt       DateTime       @default(now())
+}
+
+enum DeliveryStatus {
+  Pending
+  Accepted
+  InProgress
+  PickedUp
+  Delivered
+  Cancelled
+  Completed
+}
+
+model Donation {
+  id         Int            @id @default(autoincrement())
+  donorId    Int
+  donor      User           @relation(fields: [donorId], references: [id])
+  date       DateTime
+  timeWindow String
+  foodType   FoodType
+  serves     Int
+  createdAt  DateTime       @default(now())
+  deliveryId   Int? @unique
+  delivery     FoodDelivery? @relation("DonationDelivery", fields: [deliveryId], references: [id])
+}
+
+model FoodRequest {
+  id          Int            @id @default(autoincrement())
+  recipientId Int
+  recipient   User           @relation(fields: [recipientId], references: [id])
+  date        DateTime
+  time        String
+  foodType    FoodType
+  serves      Int
+  createdAt   DateTime       @default(now())
+  deliveryId   Int? @unique
+  delivery     FoodDelivery? @relation("RequestDelivery", fields: [deliveryId], references: [id])
+}
