@@ -22,9 +22,12 @@ export default function Login() {
     } else {
       // After login, fetch session and redirect based on role
       const session = await getSession();
-      type UserWithRole = typeof session.user & { role?: string };
-      const user = session?.user as UserWithRole | undefined;
-      const role = user?.role;
+      let role: string | undefined = undefined;
+      if (session && session.user) {
+        type UserWithRole = typeof session.user & { role?: string };
+        const user = session.user as UserWithRole;
+        role = user?.role;
+      }
       if (role === 'donor') {
         router.push('/donor-dashboard');
       } else if (role === 'recipient') {

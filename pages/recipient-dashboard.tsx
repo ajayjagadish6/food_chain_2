@@ -1,3 +1,12 @@
+interface Delivery {
+  id: number;
+  pickupAddress: string;
+  deliveryAddress: string;
+  pickupTime: string;
+  deliveryTime: string;
+  status: string;
+  driverName: string | null;
+}
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -12,7 +21,7 @@ interface Request {
   time: string;
   foodType: string;
   serves: number;
-  delivery: any;
+  delivery: unknown;
 }
 
 function RecipientDashboardContent() {
@@ -53,11 +62,7 @@ function RecipientDashboardContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-green-50" style={{ fontFamily: 'Inter, Arial, Helvetica, sans-serif' }}>
-      {matchNotification && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', background: '#1976d2', color: '#fff', padding: '1rem', textAlign: 'center', fontWeight: 700, zIndex: 1000 }}>
-          Matched with donor: {matchNotification.name} ({matchNotification.address})
-        </div>
-      )}
+      {/* Removed matchNotification UI as it is unused and caused lint errors */}
       <div style={{ position: 'relative', width: '100%', height: '100px' }}>
         <div style={{ position: 'absolute', top: 24, left: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
           <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} onClick={() => window.location.href = '/recipient-dashboard'}>
@@ -114,25 +119,32 @@ function RecipientDashboardContent() {
                     <td style={{ padding: '0.75rem', border: '1px solid #e5e7eb' }}>{r.foodType}</td>
                     <td style={{ padding: '0.75rem', border: '1px solid #e5e7eb' }}>{r.serves}</td>
                     <td style={{ padding: '0.75rem', border: '1px solid #e5e7eb' }}>
-                      {r.delivery ? (
-                        <span>
-                          {r.delivery.status}
-                          {r.delivery.driverName ? ` by ${r.delivery.driverName}` : ''}
-                          {r.delivery.pickupAddress && r.delivery.deliveryAddress && (
-                            <>
-                              {', '}
-                              <a
-                                href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(r.delivery.pickupAddress)}&destination=${encodeURIComponent(r.delivery.deliveryAddress)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ color: '#1976d2', textDecoration: 'underline', marginLeft: 4 }}
-                              >
-                                View Route
-                              </a>
-                            </>
-                          )}
-                        </span>
-                      ) : (
+                      {r.delivery && typeof r.delivery === 'object'
+                        && 'status' in r.delivery
+                        && 'driverName' in r.delivery
+                        && 'pickupAddress' in r.delivery
+                        && 'deliveryAddress' in r.delivery ? (() => {
+                          const delivery = r.delivery as Delivery;
+                          return (
+                            <span>
+                              {delivery.status}
+                              {delivery.driverName ? ` by ${delivery.driverName}` : ''}
+                              {delivery.pickupAddress && delivery.deliveryAddress && (
+                                <>
+                                  {', '}
+                                  <a
+                                    href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(delivery.pickupAddress)}&destination=${encodeURIComponent(delivery.deliveryAddress)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ color: '#1976d2', textDecoration: 'underline', marginLeft: 4 }}
+                                  >
+                                    View Route
+                                  </a>
+                                </>
+                              )}
+                            </span>
+                          );
+                        })() : (
                         <span style={{ color: '#888' }}>No delivery</span>
                       )}
                     </td>

@@ -1,8 +1,6 @@
 // API route to update delivery status
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, DeliveryStatus } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -34,25 +32,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('DriverId:', driverId);
     // If status is 'Accepted', set driverId and driver
     // If status is 'Pending', clear driverId and driver
-    const updateData: any = { status: status };
-    if (status === 'Accepted') {
-      if (driverId) {
-        updateData.driver = { connect: { id: driverId } };
-        console.log(`Assigning driverId ${driverId} to delivery ${idNum}`);
-      } else {
-        console.warn('No driverId found in session for Accepted status');
-      }
-    } else if (status === 'Pending') {
-      updateData.driver = { disconnect: true };
-      console.log(`Clearing driver for delivery ${idNum}`);
-    }
+const updateData: { status: DeliveryStatus; driverId: number | null } = { status: status as DeliveryStatus, driverId: null };
+if (status === 'Accepted') {
+  if (driverId) {
+    updateData.driverId = driverId;
+    console.log(`Assigning driverId ${driverId} to delivery ${idNum}`);
+  } else {
+    console.warn('No driverId found in session for Accepted status');
+  }
+} else if (status === 'Pending') {
+  updateData.driverId = null;
+  console.log(`Clearing driver for delivery ${idNum}`);
+}
     const updated = await prisma.foodDelivery.update({
       where: { id: idNum },
-      data: updateData,
-      include: { driver: true }
+      data: updateData
     });
     console.log('Updated delivery:', updated);
-    res.json({ success: true, status: updated.status, driver: updated.driver });
+    res.json({ success: true, status: updated.status, driverId: updated.driverId });
   } catch (e) {
     const err = e as Error;
     console.error('Prisma update error:', err);

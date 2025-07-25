@@ -1,3 +1,9 @@
+import React, { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import ProfileMenu from "../components/ProfileMenu";
+import { SessionProvider } from "next-auth/react";
 
 interface Delivery {
   id: number;
@@ -48,22 +54,16 @@ function DonorDashboard() {
         const data = await res.json();
         setDonations(Array.isArray(data) ? data : []);
         setFetchError(null);
-      } catch (e) {
+      } catch {
         setFetchError('Network error while fetching donations');
         setDonations([]);
       }
     }
     cleanupAndFetchDonations();
-  }, [filters.date, session?.user?.email]);
+  }, [session, filters.date]);
 
   return (
-    <SessionProvider>
-      <div className="min-h-screen flex flex-col bg-green-50" style={{ fontFamily: 'Inter, Arial, Helvetica, sans-serif' }}>
-        {matchNotification && (
-          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', background: '#1976d2', color: '#fff', padding: '1rem', textAlign: 'center', fontWeight: 700, zIndex: 1000 }}>
-            Matched with recipient: {matchNotification.name} ({matchNotification.address})
-          </div>
-        )}
+    <div className="min-h-screen flex flex-col bg-green-50" style={{ fontFamily: 'Inter, Arial, Helvetica, sans-serif' }}>
         <div style={{ position: 'relative', width: '100%', height: '100px' }}>
           <div style={{ position: 'absolute', top: 24, left: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
             <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} onClick={() => window.location.href = '/donor-dashboard'}>
@@ -142,7 +142,7 @@ function DonorDashboard() {
                         {!d.delivery && (
                           <button
                             style={{ background: '#b91c1c', color: '#fff', border: 'none', borderRadius: '0.5rem', padding: '0.5rem 1.2rem', fontWeight: 600, cursor: 'pointer' }}
-                            onClick={async () => {
+                        onClick={async () => {
                               await fetch(`/api/donor/cancel-donation?id=${d.id}`, { method: 'DELETE' });
                               // Refresh donations
                               let url = "/api/donor/donations";
@@ -166,11 +166,10 @@ function DonorDashboard() {
             </table>
           </div>
         </div>
-      </div>
-    </SessionProvider>
-  );
-}
 
+      </div>
+    );
+}
 
 export default function DonorDashboardWithProvider() {
   return (

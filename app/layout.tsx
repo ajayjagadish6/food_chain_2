@@ -4,20 +4,17 @@ import "./globals.css";
 
 // Removed Geist font setup
 import { SessionProvider } from "next-auth/react";
-import type { Session } from "next-auth";
 
 
 export default function RootLayout({
-  children,
-  session
+  children
 }: Readonly<{
   children: React.ReactNode;
-  session?: Session;
 }>) {
   return (
     <html lang="en">
       <body className="antialiased" style={{ fontFamily: 'Inter, Arial, Helvetica, sans-serif' }}>
-        <SessionProvider session={session}>
+        <SessionProvider>
           {children}
         </SessionProvider>
       </body>

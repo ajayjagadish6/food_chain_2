@@ -50,7 +50,7 @@ function DriverDashboard() {
       setMatchNotification(null);
     }
   }, [deliveries]);
-  const { data: session, status } = useSession();
+   const { data: session } = useSession();
 
   // Status options and labels
   const statusOptions = ["Pending", "Accepted", "PickedUp", "Delivered", "Cancelled"];
@@ -88,7 +88,7 @@ function DriverDashboard() {
           </span>
           <button
             style={{ marginLeft: 24, background: '#fff', color: '#1976d2', border: 'none', borderRadius: 6, padding: '0.25rem 0.75rem', fontWeight: 700, cursor: 'pointer' }}
-            onClick={() => setMatchNotification((prev: any) => ({ ...prev, visible: false }))}
+            onClick={() => setMatchNotification((prev: MatchNotification | null) => prev ? { ...prev, visible: false } : null)}
           >
             Dismiss
           </button>
@@ -143,7 +143,7 @@ function DriverDashboard() {
                       <select
                         value={normalizeStatus(d.status)}
                         disabled={updatingId === d.deliveryId}
-                        onChange={async (e) => {
+                         onChange={async (e: React.ChangeEvent<HTMLSelectElement>) => {
                           if (!d.deliveryId) {
                             alert('Error: Delivery ID is missing.');
                             return;
@@ -154,7 +154,7 @@ function DriverDashboard() {
                           const res = await fetch("/api/driver/updateDeliveryStatus", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ deliveryId: d.deliveryId, status: newStatus, userId: (session?.user as any)?.id }),
+                             body: JSON.stringify({ deliveryId: d.deliveryId, status: newStatus, userId: (session?.user as { id?: number })?.id }),
                             credentials: "include"
                           });
                           if (res.ok) {

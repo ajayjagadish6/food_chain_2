@@ -11,10 +11,10 @@ function parseTimeWindow(window: string): [number, number] {
 
 // Helper to parse time string (e.g. '6:30pm') to minutes since midnight
 function parseTime(str: string): number {
-  let [time, period] = str.toLowerCase().split(/(am|pm)/).filter(Boolean);
-  let [h, m] = time.split(':');
+  const [time, period] = str.toLowerCase().split(/(am|pm)/).filter(Boolean);
+  const [h, m] = time.split(':');
   let hour = parseInt(h);
-  let min = m ? parseInt(m) : 0;
+  const min = m ? parseInt(m) : 0;
   if (period === 'pm' && hour < 12) hour += 12;
   if (period === 'am' && hour === 12) hour = 0;
   return hour * 60 + min;
