@@ -5,12 +5,21 @@ import ProfileMenu from "../components/ProfileMenu";
 import { useSession, SessionProvider } from "next-auth/react";
 import { useRouter } from "next/router";
 
+
+interface Request {
+  id: number;
+  date: string;
+  time: string;
+  foodType: string;
+  serves: number;
+  delivery: any;
+}
+
 function RecipientDashboardContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [matchNotification, setMatchNotification] = useState<any>(null);
   const [filters, setFilters] = useState<{ date: string; foodType: string }>({ date: "", foodType: "" });
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<Request[]>([]);
 
   // Fetch food requests from backend API
   useEffect(() => {

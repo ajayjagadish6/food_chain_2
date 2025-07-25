@@ -1,13 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { SessionProvider, useSession } from "next-auth/react";
-import Image from "next/image";
-import Link from "next/link";
-import ProfileMenu from "../components/ProfileMenu";
+
+interface Delivery {
+  id: number;
+  pickupAddress: string;
+  deliveryAddress: string;
+  pickupTime: string;
+  deliveryTime: string;
+  status: string;
+  driverName: string | null;
+}
+interface Donation {
+  id: number;
+  date: string;
+  timeWindow: string;
+  foodType: string;
+  serves: number;
+  delivery: Delivery | null;
+}
 
 function DonorDashboard() {
-  const [matchNotification, setMatchNotification] = useState<any>(null);
   const [filters, setFilters] = useState<{ date: string }>({ date: "" });
-  const [donations, setDonations] = useState<any[]>([]);
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const { data: session } = useSession();
 
   // Fetch donations from backend API
@@ -18,12 +31,27 @@ function DonorDashboard() {
         await fetch(`/api/donor/cleanup-old-donations?email=${encodeURIComponent(session.user.email)}`);
       }
       let url = "/api/donor/donations";
-      if (filters.date) {
-        url += `?date=${filters.date}`;
+      if (session?.user?.email) {
+        url += `?email=${encodeURIComponent(session.user.email)}`;
+        if (filters.date) {
+          url += `&date=${filters.date}`;
+        }
       }
-      const res = await fetch(url);
-      const data = await res.json();
-      setDonations(Array.isArray(data) ? data : []);
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setFetchError(err.error || 'Failed to fetch donations');
+          setDonations([]);
+          return;
+        }
+        const data = await res.json();
+        setDonations(Array.isArray(data) ? data : []);
+        setFetchError(null);
+      } catch (e) {
+        setFetchError('Network error while fetching donations');
+        setDonations([]);
+      }
     }
     cleanupAndFetchDonations();
   }, [filters.date, session?.user?.email]);
@@ -50,7 +78,12 @@ function DonorDashboard() {
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-          <div style={{ width: '100%', maxWidth: 900, background: '#fff', borderRadius: '1rem', boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: '2rem', border: '1px solid #e5e7eb', marginBottom: '2rem' }}>
+            <div style={{ width: '100%', maxWidth: 900, background: '#fff', borderRadius: '1rem', boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: '2rem', border: '1px solid #e5e7eb', marginBottom: '2rem' }}>
+              {fetchError && (
+                <div style={{ color: '#b91c1c', background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '0.5rem', padding: '1rem', marginBottom: '1rem', textAlign: 'center', fontWeight: 600 }}>
+                  {fetchError}
+                </div>
+              )}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
               <h2 style={{ fontWeight: 700, fontSize: '2rem', color: '#b91c1c' }}>Your Donations</h2>
               <Link href="/donor" style={{ background: '#b91c1c', color: '#fff', borderRadius: '0.75rem', padding: '0.75rem 2rem', fontWeight: 700, fontSize: '1.1rem', textDecoration: 'none', boxShadow: '0 2px 8px rgba(185,28,28,0.12)', transition: 'background 0.2s' }}>New Donation</Link>
@@ -113,7 +146,10 @@ function DonorDashboard() {
                               await fetch(`/api/donor/cancel-donation?id=${d.id}`, { method: 'DELETE' });
                               // Refresh donations
                               let url = "/api/donor/donations";
-                              if (filters.date) url += `?date=${filters.date}`;
+                              if (session?.user?.email) {
+                                url += `?email=${encodeURIComponent(session.user.email)}`;
+                                if (filters.date) url += `&date=${filters.date}`;
+                              }
                               const res = await fetch(url);
                               const data = await res.json();
                               setDonations(Array.isArray(data) ? data : []);
@@ -135,12 +171,11 @@ function DonorDashboard() {
   );
 }
 
-import { PropsWithChildren } from "react";
 
-export default function DonorDashboardWithProvider(props: PropsWithChildren<{}>) {
+export default function DonorDashboardWithProvider() {
   return (
     <SessionProvider>
-      <DonorDashboard {...props} />
+      <DonorDashboard />
     </SessionProvider>
   );
 }

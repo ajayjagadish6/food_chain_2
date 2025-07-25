@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
-import cookie from 'cookie';
 
 const prisma = new PrismaClient();
 

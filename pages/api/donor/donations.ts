@@ -1,3 +1,4 @@
+
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
 
@@ -6,11 +7,18 @@ const prisma = new PrismaClient();
 // Returns all donations for the logged-in donor user, with filtering
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).end();
-  // For demo, show all donations in the database
-  const { date } = req.query;
-  const where: Record<string, unknown> = {};
+  const { date, email } = req.query;
+  if (!email || typeof email !== 'string') {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  // Find the donor by email
+  const donor = await prisma.user.findUnique({ where: { email, role: 'donor' } });
+  if (!donor) {
+    return res.status(401).json({ error: 'Donor not found' });
+  }
+  const where: Record<string, unknown> = { donorId: donor.id };
   if (date) where.date = new Date(date as string);
-  // Get all donations
+  // Get all donations for this donor
   const donations = await prisma.donation.findMany({
     where,
     orderBy: { date: 'desc' },
@@ -19,6 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Flatten for table display using new foodType enum
   const result = donations.map(d => ({
+    id: d.id,
     date: d.date,
     timeWindow: d.timeWindow,
     foodType: d.foodType,

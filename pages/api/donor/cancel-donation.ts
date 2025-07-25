@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (donation.delivery) return res.status(400).json({ error: 'Cannot cancel: delivery already assigned' });
     await prisma.donation.delete({ where: { id: Number(id) } });
     res.status(204).end();
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 }

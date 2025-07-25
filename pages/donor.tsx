@@ -1,22 +1,31 @@
 import Image from "next/image";
 import React, { useState } from 'react';
 import ProfileMenu from '../components/ProfileMenu';
+import { useSession, SessionProvider } from 'next-auth/react';
 
-export default function Donor() {
-  const [form, setForm] = useState({ date: '', timeWindow: '', foodType: 'Vegetarian', serves: 1 });
+
+interface DonorForm {
+  date: string;
+  timeWindow: string;
+  foodType: string;
+  serves: number;
+}
+
+function Donor() {
+  const [form, setForm] = useState<DonorForm>({ date: '', timeWindow: '', foodType: 'Vegetarian', serves: 1 });
+  const { data: session } = useSession();
   const [message, setMessage] = useState('');
-  // Removed unused Request type
-  // Removed unused requests and setFilters variables
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setMessage('');
-    const payload = {
+    const payload: DonorForm & { email?: string } = {
       date: form.date,
       timeWindow: form.timeWindow,
       foodType: form.foodType,
       serves: form.serves,
     };
+    if (session?.user?.email) payload.email = session.user.email;
     const res = await fetch('/api/donate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -28,8 +37,6 @@ export default function Donor() {
       setMessage(err.error ? err.error : 'Failed to submit donation');
     }
   }
-
-  // Removed request filtering logic and useEffect since filters and setRequests variables are no longer used
 
   return (
     <div className="min-h-screen flex flex-col bg-green-50" style={{fontFamily: 'Inter, Arial, Helvetica, sans-serif'}}>
@@ -70,7 +77,7 @@ export default function Donor() {
             <label style={{ fontWeight: 600, textAlign: 'left' }}>Food Type</label>
             <select className="input" value={form.foodType} onChange={e => setForm({ ...form, foodType: e.target.value })} style={{ width: '100%', fontSize: '1rem', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid #ccc', background: '#fafafa', textAlign: 'left' }}>
               <option value="Vegetarian">Vegetarian</option>
-              <option value="Non Vegetarian">Non Vegetarian</option>
+              <option value="NonVegetarian">Non-Vegetarian</option>
               <option value="Both">Both</option>
             </select>
             <label style={{ fontWeight: 600, textAlign: 'left' }}>Number of people the food can feed</label>
@@ -107,6 +114,14 @@ export default function Donor() {
       {/* Removed Filter Requests and Food Requests sections as requested */}
       </div>
     </div>
+  );
+}
+
+export default function DonorPageWithProvider() {
+  return (
+    <SessionProvider>
+      <Donor />
+    </SessionProvider>
   );
 }
 

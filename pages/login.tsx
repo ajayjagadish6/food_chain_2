@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { signIn, getSession } from 'next-auth/react';
@@ -21,7 +22,9 @@ export default function Login() {
     } else {
       // After login, fetch session and redirect based on role
       const session = await getSession();
-      const role = session?.user?.role;
+      type UserWithRole = typeof session.user & { role?: string };
+      const user = session?.user as UserWithRole | undefined;
+      const role = user?.role;
       if (role === 'donor') {
         router.push('/donor-dashboard');
       } else if (role === 'recipient') {
@@ -81,8 +84,8 @@ export default function Login() {
                   </form>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '2rem', marginTop: '-0.5rem' }}>
-                  <a href="/reset-password" style={{ color: '#b91c1c', textDecoration: 'underline', fontWeight: 500, fontSize: '1rem', cursor: 'pointer' }}>Reset password</a>
-                  <a href="/signup" style={{ color: '#333', textDecoration: 'underline', fontWeight: 500, fontSize: '1rem', cursor: 'pointer' }}>Sign up for free</a>
+                  <Link href="/reset-password" style={{ color: '#b91c1c', textDecoration: 'underline', fontWeight: 500, fontSize: '1rem', cursor: 'pointer' }}>Reset password</Link>
+                  <Link href="/signup" style={{ color: '#333', textDecoration: 'underline', fontWeight: 500, fontSize: '1rem', cursor: 'pointer' }}>Sign up for free</Link>
                 </div>
             </div>
         </div>

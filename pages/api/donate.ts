@@ -69,14 +69,29 @@ async function matchDonationsAndRequests() {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
-  // Use donor email from cookie
-  const email = req.cookies.userEmail;
-  if (!email) return res.status(401).json({ error: 'Not authenticated' });
+  // Use donor email from request body or cookie
+  const email = req.body.email || req.cookies.userEmail;
+  if (!email) {
+    console.log('[DONATE API] Not authenticated: no email');
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
   const donor = await prisma.user.findUnique({ where: { email, role: 'donor' } });
-  if (!donor) return res.status(401).json({ error: 'Donor not found' });
+  if (!donor) {
+    console.log(`[DONATE API] Donor not found for email: ${email}`);
+    return res.status(401).json({ error: 'Donor not found' });
+  }
   const { date, timeWindow, foodType, serves } = req.body;
-  if (!date || !timeWindow || !foodType || !serves) return res.status(400).json({ error: 'Missing required fields' });
-  await prisma.donation.create({ data: { donorId: donor.id, date: new Date(date), timeWindow, foodType, serves } });
-  await matchDonationsAndRequests();
-  res.status(201).end();
+  if (!date || !timeWindow || !foodType || !serves) {
+    console.log('[DONATE API] Missing required fields', req.body);
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  try {
+    const donation = await prisma.donation.create({ data: { donorId: donor.id, date: new Date(date), timeWindow, foodType, serves } });
+    console.log('[DONATE API] Donation created:', donation);
+    await matchDonationsAndRequests();
+    res.status(201).end();
+  } catch (err) {
+    console.error('[DONATE API] Error creating donation:', err);
+    res.status(500).json({ error: 'Failed to create donation' });
+  }
 }

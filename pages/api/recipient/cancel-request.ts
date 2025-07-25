@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (request.delivery) return res.status(400).json({ error: 'Cannot cancel: delivery already assigned' });
     await prisma.foodRequest.delete({ where: { id: Number(id) } });
     res.status(204).end();
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 }

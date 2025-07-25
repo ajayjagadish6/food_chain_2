@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { useState } from 'react';
-import { useRouter } from 'next/router';
 
 export default function Signup() {
   const [form, setForm] = useState({

@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
     res.status(204).end();
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 }

@@ -4,7 +4,6 @@ import "./globals.css";
 
 // Removed Geist font setup
 import { SessionProvider } from "next-auth/react";
-import type { Metadata } from "next";
 import type { Session } from "next-auth";
 
 

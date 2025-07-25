@@ -4,7 +4,6 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import ProfileMenu from "../components/ProfileMenu";
 import { useSession, SessionProvider } from "next-auth/react";
-import { useRouter } from "next/router";
 
 function DriverDashboard() {
   // --- State and helpers ---
@@ -23,8 +22,15 @@ function DriverDashboard() {
 
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [matchNotification, setMatchNotification] = useState<any>(null);
+  const [matchNotification, setMatchNotification] = useState<MatchNotification | null>(null);
 
+  interface MatchNotification {
+    donor: string;
+    pickup: string;
+    recipient: string;
+    delivery: string;
+    visible: boolean;
+  }
   // Show notification if any delivery is Pending or Accepted
   useEffect(() => {
     if (deliveries.length > 0) {
@@ -205,8 +211,7 @@ function DriverDashboard() {
   );
 }
 
-import { PropsWithChildren } from "react";
-export default function DriverDashboardWithProvider(props: PropsWithChildren<{}>) {
+export default function DriverDashboardWithProvider() {
   return (
     <SessionProvider>
       <DriverDashboard />
