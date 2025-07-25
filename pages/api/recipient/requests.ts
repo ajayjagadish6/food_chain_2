@@ -7,10 +7,12 @@ const prisma = new PrismaClient();
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).end();
   // For demo, get recipient by email from cookie or query param
-  let email = req.cookies.userEmail;
-  if (!email && req.query.email) email = req.query.email as string;
+  let email = req.query.email as string | undefined;
+  if (!email) email = req.cookies.userEmail;
+  console.log('[Recipient API] Incoming email:', email);
   if (!email) return res.status(401).json({ error: 'Not authenticated' });
   const recipient = await prisma.user.findUnique({ where: { email } });
+  console.log('[Recipient API] Found recipient:', recipient);
   if (!recipient) return res.status(401).json({ error: 'Recipient not found' });
 
   // Only filter by date if provided, and match by day not exact timestamp
@@ -29,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const requests = await prisma.foodRequest.findMany({
     where,
     orderBy: { date: 'desc' },
-    include: { delivery: true },
+    include: { delivery: { include: { driver: true } } },
   });
 
   // Flatten for table display
@@ -45,7 +47,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       deliveryAddress: r.delivery.deliveryAddress,
       pickupTime: r.delivery.pickupTime,
       deliveryTime: r.delivery.deliveryTime,
-      status: r.delivery.status
+      status: r.delivery.status,
+      driverName: r.delivery.driver ? r.delivery.driver.name : null
     } : null
   }));
   res.json(result);

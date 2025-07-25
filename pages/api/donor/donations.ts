@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const donations = await prisma.donation.findMany({
     where,
     orderBy: { date: 'desc' },
-    include: { delivery: true },
+    include: { delivery: { include: { driver: true } } },
   });
 
   // Flatten for table display using new foodType enum
@@ -29,7 +29,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       deliveryAddress: d.delivery.deliveryAddress,
       pickupTime: d.delivery.pickupTime,
       deliveryTime: d.delivery.deliveryTime,
-      status: d.delivery.status
+      status: d.delivery.status,
+      driverName: d.delivery.driver ? d.delivery.driver.name : null
     } : null
   }));
   res.json(result);

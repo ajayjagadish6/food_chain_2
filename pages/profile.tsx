@@ -15,10 +15,19 @@ export default function Profile() {
 
   useEffect(() => {
     fetch('/api/profile')
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Profile fetch failed: ${res.status} ${text}`);
+        }
+        return res.json();
+      })
       .then(data => {
         setProfile(data);
         setForm(data);
+      })
+      .catch(err => {
+        setMessage(err.message || 'Failed to load profile.');
       });
   }, []);
 

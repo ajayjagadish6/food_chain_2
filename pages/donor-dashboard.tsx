@@ -10,7 +10,23 @@ function DonorDashboard() {
   const [donations, setDonations] = useState<any[]>([]);
   const { data: session } = useSession();
 
-  // ...fetch donations and set matchNotification logic here...
+  // Fetch donations from backend API
+  useEffect(() => {
+    async function cleanupAndFetchDonations() {
+      // Remove all past Donation records for this donor
+      if (session?.user?.email) {
+        await fetch(`/api/donor/cleanup-old-donations?email=${encodeURIComponent(session.user.email)}`);
+      }
+      let url = "/api/donor/donations";
+      if (filters.date) {
+        url += `?date=${filters.date}`;
+      }
+      const res = await fetch(url);
+      const data = await res.json();
+      setDonations(Array.isArray(data) ? data : []);
+    }
+    cleanupAndFetchDonations();
+  }, [filters.date, session?.user?.email]);
 
   return (
     <SessionProvider>
@@ -53,6 +69,7 @@ function DonorDashboard() {
                   <th style={{ padding: '0.75rem', border: '1px solid #e5e7eb' }}>Food Type</th>
                   <th style={{ padding: '0.75rem', border: '1px solid #e5e7eb' }}>Serves</th>
                   <th style={{ padding: '0.75rem', border: '1px solid #e5e7eb' }}>Delivery</th>
+                  <th style={{ padding: '0.75rem', border: '1px solid #e5e7eb' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -68,10 +85,42 @@ function DonorDashboard() {
                       <td style={{ padding: '0.75rem', border: '1px solid #e5e7eb' }}>
                         {d.delivery ? (
                           <span>
-                            {d.delivery.status} | Pickup: {d.delivery.pickupAddress} | Delivery: {d.delivery.deliveryAddress}
+                            {d.delivery.status}
+                            {d.delivery.driverName ? ` by ${d.delivery.driverName}` : ''}
+                            {d.delivery.pickupAddress && d.delivery.deliveryAddress && (
+                              <>
+                                {', '}
+                                <a
+                                  href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(d.delivery.pickupAddress)}&destination=${encodeURIComponent(d.delivery.deliveryAddress)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ color: '#1976d2', textDecoration: 'underline', marginLeft: 4 }}
+                                >
+                                  View Route
+                                </a>
+                              </>
+                            )}
                           </span>
                         ) : (
                           <span style={{ color: '#888' }}>No delivery</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '0.75rem', border: '1px solid #e5e7eb', textAlign: 'center' }}>
+                        {!d.delivery && (
+                          <button
+                            style={{ background: '#b91c1c', color: '#fff', border: 'none', borderRadius: '0.5rem', padding: '0.5rem 1.2rem', fontWeight: 600, cursor: 'pointer' }}
+                            onClick={async () => {
+                              await fetch(`/api/donor/cancel-donation?id=${d.id}`, { method: 'DELETE' });
+                              // Refresh donations
+                              let url = "/api/donor/donations";
+                              if (filters.date) url += `?date=${filters.date}`;
+                              const res = await fetch(url);
+                              const data = await res.json();
+                              setDonations(Array.isArray(data) ? data : []);
+                            }}
+                          >
+                            Cancel
+                          </button>
                         )}
                       </td>
                     </tr>

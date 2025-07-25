@@ -1,10 +1,11 @@
 import Image from "next/image";
 import React, { useState } from 'react';
 import ProfileMenu from '../components/ProfileMenu';
+import { useSession, SessionProvider } from 'next-auth/react';
 
-export default function Recipient() {
-
+function Recipient() {
   const [form, setForm] = useState({ date: '', time: '', foodType: 'Vegetarian', serves: 1 });
+  const { data: session } = useSession();
   const [message, setMessage] = useState('');
   // Removed unused Donation type and donations state
   // Removed unused setFilters variable
@@ -12,16 +13,16 @@ export default function Recipient() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMessage('');
+    const payload: any = { ...form };
+    if (session?.user?.email) payload.email = session.user.email;
     const res = await fetch('/api/request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     });
     if (res.ok) setMessage('Request submitted!');
     else setMessage('Failed to submit request');
   }
-
-  // Removed donation filtering logic and useEffect since filters variable is no longer used
 
   return (
     <div className="min-h-screen flex flex-col bg-yellow-50" style={{fontFamily: 'Inter, Arial, Helvetica, sans-serif'}}>
@@ -90,6 +91,14 @@ export default function Recipient() {
       {/* Filter Donation and Available Donations sections removed */}
       </div>
     </div>
+  );
+}
+
+export default function RecipientPageWithProvider() {
+  return (
+    <SessionProvider>
+      <Recipient />
+    </SessionProvider>
   );
 }
 

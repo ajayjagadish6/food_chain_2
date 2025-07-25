@@ -70,8 +70,8 @@ async function matchDonationsAndRequests() {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (req.method !== 'POST') return res.status(405).end();
-    // Get recipient by email from cookie
-    const email = req.cookies.userEmail;
+    // Get recipient by email from request body or cookie
+    const email = req.body.email || req.cookies.userEmail;
     if (!email) return res.status(401).json({ error: 'Not authenticated' });
     const recipient = await prisma.user.findUnique({ where: { email, role: 'recipient' } });
     if (!recipient) return res.status(401).json({ error: 'Recipient not found' });
